@@ -42491,6 +42491,26 @@ class UploadProgress {
     }
 }
 exports.UploadProgress = UploadProgress;
+class AuthPolicy {
+    constructor(_nextPolicy, _options, _token) {
+        this._nextPolicy = _nextPolicy;
+        this._options = _options;
+        this._token = _token;
+    }
+    sendRequest(httpRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            httpRequest.headers.set('Authorization', `Bearer ${this._token}`);
+            return this._nextPolicy.sendRequest(httpRequest);
+        });
+    }
+}
+function createAuthPolicy(token) {
+    return {
+        create: (nextPolicy, options) => {
+            return new AuthPolicy(nextPolicy, options, token);
+        }
+    };
+}
 /**
  * Uploads a cache archive directly to Azure Blob Storage using the Azure SDK.
  * This function will display progress information to the console. Concurrency of the
@@ -42504,7 +42524,11 @@ exports.UploadProgress = UploadProgress;
 function uploadCacheArchiveSDK(signedUploadURL, archivePath, options) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
-        const blobClient = new storage_blob_1.BlobClient(signedUploadURL);
+        const token = (0, cacheUtils_1.getRuntimeToken)();
+        // Create default pipeline and inject custom auth
+        const pipeline = (0, storage_blob_1.newPipeline)(); // or construct manually if needed
+        pipeline.factories.unshift(createAuthPolicy(token)); // add it early in the pipeline
+        const blobClient = new storage_blob_1.BlobClient(signedUploadURL, pipeline);
         const blockBlobClient = blobClient.getBlockBlobClient();
         const uploadProgress = new UploadProgress((_a = options === null || options === void 0 ? void 0 : options.archiveSizeBytes) !== null && _a !== void 0 ? _a : 0);
         // Specify data transfer options
@@ -42512,11 +42536,7 @@ function uploadCacheArchiveSDK(signedUploadURL, archivePath, options) {
             blockSize: options === null || options === void 0 ? void 0 : options.uploadChunkSize,
             concurrency: options === null || options === void 0 ? void 0 : options.uploadConcurrency,
             maxSingleShotSize: 128 * 1024 * 1024,
-            onProgress: uploadProgress.onProgress(),
-            blobHTTPHeaders: {
-                // @ts-ignore
-                "Authorization": (0, cacheUtils_1.getRuntimeToken)(),
-            }
+            onProgress: uploadProgress.onProgress()
         };
         core.info(`uploadCacheArchiveSDK: uploading cache archive to ${blobClient.url} with auth token`);
         try {
