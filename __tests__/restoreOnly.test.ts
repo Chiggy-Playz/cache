@@ -1,4 +1,4 @@
-import * as cache from "@actions/cache";
+import * as cache from "@cirunlabs/cache";
 import * as core from "@actions/core";
 
 import { Events, RefKey } from "../src/constants";

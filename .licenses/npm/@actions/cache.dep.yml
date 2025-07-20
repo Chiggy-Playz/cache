@@ -1,9 +1,9 @@
 ---
-name: "@actions/cache"
+name: "@cirunlabs/cache"
 version: 4.0.3
 type: npm
-summary: Actions cache lib
-homepage: https://github.com/actions/toolkit/tree/main/packages/cache
+summary: Custom fork of Actions cache lib
+homepage: https://github.com/cirunlabs/toolkit/tree/main/packages/cache
 license: mit
 licenses:
 - sources: LICENSE.md
