@@ -39736,7 +39736,7 @@ function restoreCacheV2(paths, primaryKey, restoreKeys, options, enableCrossOsAr
     return __awaiter(this, void 0, void 0, function* () {
         // Override UploadOptions to never use Azure due to reduced security
         // Azure blob client requests lack an authentication header
-        options = Object.assign(Object.assign({}, options), { useAzureSdk: false });
+        options = Object.assign(Object.assign({}, options), { useAzureSdk: true });
         restoreKeys = restoreKeys || [];
         const keys = [primaryKey, ...restoreKeys];
         core.debug('Resolved Keys:');
@@ -42405,6 +42405,7 @@ exports.uploadCacheArchiveSDK = exports.UploadProgress = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const storage_blob_1 = __nccwpck_require__(1012);
 const errors_1 = __nccwpck_require__(8529);
+const cacheUtils_1 = __nccwpck_require__(8581);
 /**
  * Class for tracking the upload state and displaying stats.
  */
@@ -42511,8 +42512,13 @@ function uploadCacheArchiveSDK(signedUploadURL, archivePath, options) {
             blockSize: options === null || options === void 0 ? void 0 : options.uploadChunkSize,
             concurrency: options === null || options === void 0 ? void 0 : options.uploadConcurrency,
             maxSingleShotSize: 128 * 1024 * 1024,
-            onProgress: uploadProgress.onProgress()
+            onProgress: uploadProgress.onProgress(),
+            blobHTTPHeaders: {
+                // @ts-ignore
+                "Authorization": (0, cacheUtils_1.getRuntimeToken)(),
+            }
         };
+        core.info(`uploadCacheArchiveSDK: uploading cache archive to ${blobClient.url} with auth token`);
         try {
             uploadProgress.startDisplayTimer();
             core.debug(`BlobClient: ${blobClient.name}:${blobClient.accountName}:${blobClient.containerName}`);
